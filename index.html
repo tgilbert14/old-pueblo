@@ -126,11 +126,12 @@
     const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 
     // ---------------- Scroll geometry: weighted bands <-> master time ----------------
-    let VH = innerHeight, SCROLL_LEN = 0, bands = [];
+    let VH = innerHeight, SCROLL_LEN = 0, bands = [], layoutValid = false;
     function layout() {
       VH = innerHeight; SCROLL_LEN = 0; bands = [];
       for (const s of SEGS) { const len = s.w * VH; bands.push({ seg: s, y0: SCROLL_LEN, y1: SCROLL_LEN + len }); SCROLL_LEN += len; }
       document.body.style.height = (SCROLL_LEN + VH) + 'px';
+      layoutValid = VH > 0;   // a backgrounded tab can boot with innerHeight 0
     }
     function timeAt(y) {                       // scroll px -> master seconds (piecewise linear)
       y = clamp(y, 0, SCROLL_LEN - 0.001);
@@ -234,7 +235,12 @@
     // ---------------- The loop ----------------
     let curT = 0;
     function frameFor(t) { return clamp(Math.round(t * FPS), 0, FRAMES - 1); }
+    function relayout() {
+      const keepT = layoutValid ? timeAt(scrollY) : 0;   // if the old layout was degenerate, restart at 0
+      layout(); sizeCanvas(); scrollTo(0, yAt(keepT));
+    }
     function tick() {
+      if (innerHeight > 0 && innerHeight !== VH) relayout();   // self-heal: backgrounded boot, pane resize
       const y = scrollY;
       const target = timeAt(y);
       curT += (target - curT) * 0.28;                       // gentle temporal lerp — takes the top off scroll-wheel steps
@@ -276,18 +282,14 @@
       fetch('assets/vid/real/master-m.mp4').then(r => r.blob()).then(b => { v.src = URL.createObjectURL(b); });
       v.addEventListener('loadeddata', () => poster.classList.add('hidden'));
       stage.appendChild(v);
-      const vtick = () => { const t = timeAt(scrollY); if (v.readyState >= 2 && Math.abs(v.currentTime - t) > 0.03 && !v.seeking) v.currentTime = t; updateCopy(t, scrollY); requestAnimationFrame(vtick); };
+      const vtick = () => { if (innerHeight > 0 && innerHeight !== VH) relayout(); const t = timeAt(scrollY); if (v.readyState >= 2 && Math.abs(v.currentTime - t) > 0.03 && !v.seeking) v.currentTime = t; updateCopy(t, scrollY); requestAnimationFrame(vtick); };
       layout(); sizeCanvas(); requestAnimationFrame(vtick);
     } else {
       layout(); sizeCanvas();
       decodeFrame(0).then(() => paint(0));
       requestAnimationFrame(tick);
     }
-    addEventListener('resize', () => {
-      const keepT = timeAt(scrollY);
-      layout(); sizeCanvas();
-      scrollTo(0, yAt(keepT));
-    });
+    addEventListener('resize', relayout);
   })();
   </script>
 </body>
