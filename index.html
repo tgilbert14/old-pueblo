@@ -1,296 +1,186 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>The Old Pueblo — one desert day, built for Saturday night</title>
-  <meta name="description" content="Fly through a Sonoran Desert Saturday — dawn in the saguaros, into the monsoon, under the Milky Way — and back down into Arizona Stadium at kickoff. Bear Down." />
-  <meta property="og:title" content="The Old Pueblo — one desert day, built for Saturday night" />
-  <meta property="og:description" content="Dawn in the saguaro forest, through the monsoon, under the Milky Way — then back down into Arizona Stadium under the lights. Bear Down." />
-  <meta property="og:image" content="https://tgilbert14.github.io/old-pueblo/assets/real/stadium.webp" />
+  <title>The Long Saturday — a game-day almanac from Tucson</title>
+  <meta name="description" content="Travel a Sonoran Saturday from first light on the bajada to one bowl of light at kickoff." />
+  <meta name="theme-color" content="#0a0c0c" />
+  <meta property="og:title" content="The Long Saturday — a game-day almanac from Tucson" />
+  <meta property="og:description" content="One desert day. Four movements. Fifty-two seconds from first light to kickoff." />
+  <meta property="og:image" content="assets/real/stadium.webp" />
   <meta name="twitter:card" content="summary_large_image" />
-  <style>
-    :root {
-      --bg: #14110D; --ink: #F2EAE0; --ink-soft: #B8AC9E; --accent: #E9A489;
-      --font: system-ui, -apple-system, "Segoe UI", sans-serif;
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); }
-    /* The film */
-    #stage { position: fixed; inset: 0; z-index: 1; }
-    #stage canvas, #stage video, #stage img.poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    #stage img.poster { transition: opacity .5s; }
-    #stage img.poster.hidden { opacity: 0; }
-    /* Copy layer */
-    #copylayer { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
-    #copylayer::before { content: ""; position: absolute; inset: 0; width: min(58vw, 780px);
-      background: linear-gradient(90deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 78%, transparent) 34%, color-mix(in srgb, var(--bg) 36%, transparent) 62%, transparent 100%); }
-    .copy { position: absolute; left: clamp(18px, 5vw, 64px); top: 50%; transform: translateY(-50%);
-      width: min(42vw, 460px); opacity: 0; will-change: opacity, transform; }
-    .copy .num { font: 500 .74rem/1 ui-monospace, Menlo, monospace; letter-spacing: .12em; color: var(--ink-soft); }
-    .copy .eyebrow { display: block; margin-top: 16px; font-weight: 700; font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; color: var(--a, var(--accent)); }
-    .copy h2 { font-weight: 700; font-size: clamp(2rem, 4.4vw, 3.4rem); line-height: 1.04; margin: 12px 0 0; letter-spacing: -.01em;
-      text-shadow: 0 2px 22px color-mix(in srgb, var(--bg) 72%, transparent); }
-    .copy p { margin-top: 16px; font-size: clamp(1rem, 1.25vw, 1.14rem); line-height: 1.55; max-width: 40ch;
-      color: color-mix(in srgb, var(--ink) 82%, var(--ink-soft)); text-shadow: 0 1px 12px color-mix(in srgb, var(--bg) 90%, transparent); }
-    .copy .tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; }
-    .copy .tags li { font-size: .82rem; font-weight: 600; padding: 7px 14px; border-radius: 999px;
-      color: color-mix(in srgb, var(--a, var(--accent)) 75%, #fff); background: color-mix(in srgb, var(--a, var(--accent)) 16%, transparent);
-      border: 1px solid color-mix(in srgb, var(--a, var(--accent)) 35%, transparent); }
-    .copy .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; pointer-events: auto; }
-    .copy .cta a { text-decoration: none; font-weight: 700; font-size: .95rem; padding: 14px 22px; border-radius: 999px; }
-    .copy .cta a.primary { background: var(--ink); color: #14110D; }
-    .copy .cta a.ghost { color: var(--ink); border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent); }
-    /* Topbar + rail */
-    #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; gap: 12px;
-      padding: max(14px, env(safe-area-inset-top)) clamp(18px, 4vw, 40px) 14px;
-      background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 72%, transparent), transparent); }
-    #topbar .mark { width: 26px; height: 26px; border-radius: 9px; background: linear-gradient(140deg, #C4643E, #8A3D28); }
-    #topbar .name { font-weight: 700; letter-spacing: .01em; }
-    #rail { position: fixed; right: max(14px, env(safe-area-inset-right)); top: 50%; transform: translateY(-50%);
-      z-index: 30; display: flex; flex-direction: column; gap: 12px; }
-    #rail button { width: 10px; height: 10px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
-      background: color-mix(in srgb, var(--ink) 32%, transparent); transition: transform .2s, background .2s; }
-    #rail button.on { background: var(--accent); transform: scale(1.5); }
-    /* Hint + Fly + footer */
-    #hint { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%);
-      z-index: 30; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); transition: opacity .5s; }
-    #hint.hidden { opacity: 0; }
-    #fly { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom));
-      z-index: 60; display: flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px;
-      border: 1px solid rgba(242,234,224,.28); background: rgba(20,17,13,.62);
-      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-      color: #F2EAE0; font: 600 .95rem/1 var(--font); letter-spacing: .04em; cursor: pointer; transition: background .25s, transform .18s; }
-    #fly:hover { background: rgba(20,17,13,.85); transform: translateY(-1px); }
-    #fly .dot { width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent #E9A489; }
-    #fly[data-state="flying"] .dot { width: 9px; height: 11px; border: 0; border-left: 3px solid #E9A489; border-right: 3px solid #E9A489; }
-    #disclaimer { position: fixed; left: max(14px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom));
-      z-index: 55; font: 400 .68rem/1.3 var(--font); color: rgba(242,234,224,.55); pointer-events: none; }
-    #loadbar { position: fixed; top: 0; left: 0; height: 2px; z-index: 70; background: var(--accent); width: 0; transition: width .4s; opacity: .8; }
-    #loadbar.done { opacity: 0; transition: opacity 1s; }
-    /* Phones: bottom-anchored copy over a deep scrim */
-    @media (hover: none), (max-width: 860px) {
-      #copylayer::before { width: 100%; height: 78%; top: auto; bottom: 0;
-        background: linear-gradient(0deg, var(--bg) 22%, color-mix(in srgb, var(--bg) 80%, transparent) 52%, color-mix(in srgb, var(--bg) 35%, transparent) 78%, transparent 100%); }
-      .copy { left: clamp(18px, 5vw, 64px); right: clamp(18px, 5vw, 64px); top: auto; bottom: clamp(64px, 14vh, 120px); transform: none; width: auto; max-width: 560px; }
-    }
-    @media (prefers-reduced-motion: reduce) { #fly { display: none; } }
-  </style>
+  <link rel="icon" href="assets/real/desert.webp" type="image/webp" />
+  <link rel="preload" href="assets/real/desert.webp" as="image" fetchpriority="high" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="src/story.css" />
+  <script src="src/story.js" defer></script>
+  <script src="src/soundscape.js" defer></script>
 </head>
 <body>
-  <div id="top"></div>
-  <div id="loadbar"></div>
-  <div id="stage">
-    <img class="poster" src="assets/real/desert.webp" alt="A saguaro forest at first light, mist between the cacti, mountains catching pink dawn." />
+  <a class="skip-link" href="#story">Skip to the story</a>
+  <div id="top" aria-hidden="true"></div>
+
+  <div id="day-progress" aria-hidden="true"><span></span><i></i></div>
+
+  <div id="stage" aria-hidden="true">
+    <div class="poster-stack">
+      <img class="poster is-visible" data-poster="desert" src="assets/real/desert.webp" alt="" />
+      <img class="poster" data-poster="monsoon" src="assets/real/monsoon.webp" alt="" />
+      <img class="poster" data-poster="kittpeak" src="assets/real/kittpeak.webp" alt="" />
+      <img class="poster" data-poster="stadium" src="assets/real/stadium.webp" alt="" />
+    </div>
+    <canvas id="film-canvas"></canvas>
+    <video id="film-video" muted playsinline preload="none"></video>
+    <div class="stage-wash"></div>
   </div>
-  <div id="copylayer"></div>
-  <div id="topbar"><span class="mark"></span><span class="name">The Old Pueblo</span></div>
-  <div id="rail"></div>
-  <div id="hint">scroll to fly — or press Fly</div>
-  <button id="fly" data-state="idle" aria-label="Fly through automatically"><span class="dot"></span><span id="fly-label">Fly</span></button>
-  <div id="disclaimer">A personal fan project — not affiliated with the University of Arizona.</div>
 
-  <script>
-  (() => {
-    'use strict';
-    // ---------------- The film manifest (one master timeline, joints baked) ----------------
-    const FPS = 30, FRAMES = 1571, DUR = 52.367;
-    const src = i => `assets/film/f${String(i + 1).padStart(4, '0')}.webp`;
-    // Master-time segment bounds (joint midpoints of the baked crossfades) + scroll weights.
-    const SEGS = [
-      { id: 'desert',   t0: 0.000,  t1: 9.767,  w: 1.8, a: '#E9A489',
-        eyebrow: 'Saturday · 5:47 AM · The Bajada', title: 'The desert doesn’t raise anything soft.',
-        body: 'Two hundred years standing in one spot — this valley grows patience, deep roots, and things with armor. It raises its people the same way. And today is Saturday.',
-        tags: ['Sonoran Desert', 'First light', 'Game day'] },
-      { id: 'conn1',    t0: 9.767,  t1: 14.333, w: 1.0 },
-      { id: 'monsoon',  t0: 14.333, t1: 23.900, w: 2.0, a: '#9FB2CC',
-        eyebrow: 'Saturday · 4:58 PM · The Monsoon', title: 'You can smell the rain before it lands.',
-        body: 'Creosote on wet stone, a wall of water on the Catalinas, every wash running at once — the desert runs its own preseason.',
-        tags: ['Monsoon season', 'Santa Catalinas', 'Creosote'] },
-      { id: 'conn2',    t0: 23.900, t1: 28.467, w: 1.0 },
-      { id: 'kittpeak', t0: 28.467, t1: 38.033, w: 1.8, a: '#8FA3D9',
-        eyebrow: 'Saturday · 8:47 PM · Kitt Peak', title: 'The whole city keeps its lights low, on purpose.',
-        body: 'This city dims its lights and looks up. Except on Saturdays.',
-        tags: ['Dark-sky city', 'Kitt Peak'] },
-      { id: 'conn3',    t0: 38.033, t1: 42.600, w: 1.0 },
-      { id: 'stadium',  t0: 42.600, t1: 52.367, w: 2.6, a: '#D34B5E',
-        eyebrow: 'Saturday · 9:12 PM · Kickoff · Arizona Stadium', title: 'On Saturdays, the desert gathers here.',
-        body: 'Everything this desert grows ends up here — fifty thousand of us, one bowl of light. Bear Down.',
-        tags: ['Bear Down', 'Arizona Stadium', 'Game night'],
-        cta: { primary: { label: 'Bear Down — see the schedule', href: 'https://arizonawildcats.com/sports/football/schedule' },
-               secondary: { label: 'Start the day again', href: '#top' } } },
-    ];
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const TOTAL_W = SEGS.reduce((s, x) => s + x.w, 0);
-    const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-    const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  <header id="chrome">
+    <a class="wordmark" href="#top" aria-label="The Long Saturday — return to the beginning">
+      <span class="wordmark-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>The Long Saturday</strong><small>A game-day almanac</small></span>
+    </a>
+    <div class="chrome-actions">
+      <button id="about-open" class="text-control" type="button">Field notes</button>
+      <button id="sound" class="sound-control transport-control" type="button" aria-pressed="true" aria-label="Turn soundtrack off" hidden>
+        <span class="sound-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span id="sound-label">Sound on</span>
+      </button>
+      <button id="play" class="play-control transport-control" type="button" aria-pressed="false" aria-label="Play the 52-second story with sound">
+        <span class="play-icon" aria-hidden="true"></span>
+        <span id="play-label">Play with sound</span>
+        <span id="play-time">00:52</span>
+      </button>
+    </div>
+  </header>
 
-    // ---------------- Scroll geometry: weighted bands <-> master time ----------------
-    let VH = innerHeight, SCROLL_LEN = 0, bands = [], layoutValid = false;
-    function layout() {
-      VH = innerHeight; SCROLL_LEN = 0; bands = [];
-      for (const s of SEGS) { const len = s.w * VH; bands.push({ seg: s, y0: SCROLL_LEN, y1: SCROLL_LEN + len }); SCROLL_LEN += len; }
-      document.body.style.height = (SCROLL_LEN + VH) + 'px';
-      layoutValid = VH > 0;   // a backgrounded tab can boot with innerHeight 0
-    }
-    function timeAt(y) {                       // scroll px -> master seconds (piecewise linear)
-      y = clamp(y, 0, SCROLL_LEN - 0.001);
-      for (const b of bands) if (y < b.y1) { const p = (y - b.y0) / (b.y1 - b.y0); return b.seg.t0 + p * (b.seg.t1 - b.seg.t0); }
-      return DUR;
-    }
-    function yAt(t) {                          // master seconds -> scroll px (inverse)
-      t = clamp(t, 0, DUR - 0.001);
-      for (const b of bands) if (t < b.seg.t1) { const p = (t - b.seg.t0) / (b.seg.t1 - b.seg.t0); return b.y0 + p * (b.y1 - b.y0); }
-      return SCROLL_LEN;
-    }
+  <div id="buffer-status" aria-hidden="true">Opening frame ready</div>
+  <div id="buffer-announcer" class="sr-only" role="status" aria-live="polite"></div>
+  <div id="scene-status" class="sr-only" role="status" aria-live="polite"></div>
+  <div id="sound-status" class="sr-only" role="status" aria-live="polite"></div>
 
-    // ---------------- Frame store: progressive fetch + windowed ImageBitmap decode ----------------
-    const blobs = new Array(FRAMES).fill(null);      // compressed WebP blobs (~120 MB total, fetched progressively)
-    const bitmaps = new Map();                       // frameIdx -> ImageBitmap (decoded window only)
-    const decoding = new Set(); const fetching = new Set();
-    let fetched = 0; const loadbar = document.getElementById('loadbar');
-    const BACK = 24, FWD = 48;                       // decoded window ≈ 72 frames (~265 MB at 720p)
-    async function fetchFrame(i) {
-      if (blobs[i] || fetching.has(i)) return;
-      fetching.add(i);
-      try { const r = await fetch(src(i)); blobs[i] = await r.blob(); fetched++;
-            if (fetched % 40 === 0 || fetched === FRAMES) { loadbar.style.width = (100 * fetched / FRAMES) + '%'; if (fetched === FRAMES) loadbar.classList.add('done'); } }
-      catch (e) {} finally { fetching.delete(i); }
-    }
-    async function decodeFrame(i) {
-      if (bitmaps.has(i) || decoding.has(i)) return;
-      if (!blobs[i]) { await fetchFrame(i); if (!blobs[i]) return; }
-      decoding.add(i);
-      try { bitmaps.set(i, await createImageBitmap(blobs[i])); } catch (e) {} finally { decoding.delete(i); }
-    }
-    function tendWindow(center) {
-      const lo = Math.max(0, center - BACK), hi = Math.min(FRAMES - 1, center + FWD);
-      for (const [k, bm] of bitmaps) if (k < lo - 12 || k > hi + 12) { bm.close(); bitmaps.delete(k); }
-      for (let d = 0; d <= FWD; d++) {                       // nearest-first
-        const a = center + d, b = center - d;
-        if (a <= hi) decodeFrame(a);
-        if (d && d <= BACK && b >= lo) decodeFrame(b);
-      }
-    }
-    (async () => {                                           // background sweep: fill every blob, 6 lanes
-      const lanes = Array.from({ length: 6 }, async (_, l) => { for (let i = l; i < FRAMES; i += 6) await fetchFrame(i); });
-      await Promise.all(lanes);
-    })();
+  <nav id="meridian" aria-label="The four movements">
+    <span class="meridian-line" aria-hidden="true"></span>
+    <button type="button" data-target="desert" aria-label="Go to movement 1, The Bajada at 5:47 AM">
+      <i aria-hidden="true"></i><span><b>05:47</b><small>T−15:25</small></span>
+    </button>
+    <button type="button" data-target="monsoon" aria-label="Go to movement 2, The Monsoon at 4:58 PM">
+      <i aria-hidden="true"></i><span><b>16:58</b><small>T−04:14</small></span>
+    </button>
+    <button type="button" data-target="kittpeak" aria-label="Go to movement 3, Kitt Peak at 8:47 PM">
+      <i aria-hidden="true"></i><span><b>20:47</b><small>T−00:25</small></span>
+    </button>
+    <button type="button" data-target="stadium" aria-label="Go to movement 4, kickoff at 9:12 PM">
+      <i aria-hidden="true"></i><span><b>21:12</b><small>Kickoff</small></span>
+    </button>
+  </nav>
 
-    // ---------------- Painter ----------------
-    const stage = document.getElementById('stage');
-    const poster = stage.querySelector('.poster');
-    const canvas = document.createElement('canvas'); stage.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    let cw = 0, ch = 0, painted = -1, firstPaint = false;
-    function sizeCanvas() {
-      const dpr = Math.min(2, devicePixelRatio || 1);
-      cw = Math.round(innerWidth * dpr); ch = Math.round(innerHeight * dpr);
-      canvas.width = cw; canvas.height = ch; painted = -1;
-    }
-    function paint(i) {
-      let bm = bitmaps.get(i);
-      if (!bm) { for (let d = 1; d <= 10 && !bm; d++) bm = bitmaps.get(i - d) || bitmaps.get(i + d); }
-      if (!bm) return;
-      const s = Math.max(cw / bm.width, ch / bm.height);
-      const w = bm.width * s, h = bm.height * s;
-      ctx.drawImage(bm, (cw - w) / 2, (ch - h) / 2, w, h);
-      painted = i;
-      if (!firstPaint) { firstPaint = true; poster.classList.add('hidden'); }
-    }
+  <main id="story" tabindex="-1">
+    <section class="story-panel prologue" data-panel="prologue" aria-labelledby="prologue-title">
+      <div class="copy-inner">
+        <p class="kicker">The Old Pueblo <span>/</span> One Saturday</p>
+        <h1 id="prologue-title">It starts long before kickoff.</h1>
+        <p class="dek">One desert day—from first light on the bajada to kickoff under the lights.</p>
+        <p class="scroll-cue"><span aria-hidden="true"></span> Scroll to travel</p>
+      </div>
+    </section>
 
-    // ---------------- Copy layer + rail ----------------
-    const layer = document.getElementById('copylayer'), rail = document.getElementById('rail');
-    const copies = [], dots = [], story = SEGS.filter(s => s.eyebrow);
-    story.forEach((s, i) => {
-      const el = document.createElement('article'); el.className = 'copy'; el.style.setProperty('--a', s.a);
-      el.innerHTML =
-        `<span class="num">${String(i + 1).padStart(2, '0')} / ${String(story.length).padStart(2, '0')}</span>` +
-        `<span class="eyebrow">${s.eyebrow}</span><h2>${s.title}</h2><p>${s.body}</p>` +
-        `<ul class="tags">${s.tags.map(t => `<li>${t}</li>`).join('')}</ul>` +
-        (s.cta ? `<div class="cta"><a class="primary" href="${s.cta.primary.href}">${s.cta.primary.label}</a>` +
-                 `<a class="ghost" href="${s.cta.secondary.href}">${s.cta.secondary.label}</a></div>` : '');
-      layer.appendChild(el); copies.push({ seg: s, el });
-      const d = document.createElement('button'); d.setAttribute('aria-label', s.eyebrow);
-      d.addEventListener('click', () => { stopFly(); scrollTo({ top: yAt((s.t0 + s.t1) / 2), behavior: reduce ? 'auto' : 'smooth' }); });
-      rail.appendChild(d); dots.push(d);
-    });
-    const hint = document.getElementById('hint');
-    function updateCopy(t, y) {
-      let active = 0;
-      copies.forEach((c, i) => {
-        const p = (t - c.seg.t0) / (c.seg.t1 - c.seg.t0);
-        let op;
-        if (i === 0) op = t < c.seg.t0 ? 1 : (p > 1 ? 0 : smooth(1 - Math.abs(p - 0.35) / 0.65));
-        else if (i === copies.length - 1) op = p < 0 ? 0 : smooth(clamp(p / 0.45, 0, 1));
-        else op = (p < 0 || p > 1) ? 0 : smooth(1 - Math.abs(p - 0.5) / 0.5);
-        c.el.style.opacity = op.toFixed(3);
-        c.el.style.transform = innerWidth > 860 ? `translateY(calc(-50% + ${(1 - op) * 14}px))` : `translateY(${(1 - op) * 14}px)`;
-        if (op > 0.5) active = i;
-      });
-      dots.forEach((d, i) => d.classList.toggle('on', i === active));
-      hint.classList.toggle('hidden', y > VH * 0.3);
-    }
+    <section class="story-panel chapter chapter-left chapter-desert" data-panel="desert" aria-labelledby="desert-title">
+      <img class="chapter-poster" src="assets/real/desert.webp" alt="A saguaro forest at first light below pink desert mountains." />
+      <div class="copy-inner">
+        <p class="movement"><span>Movement 01</span><b>Roots</b></p>
+        <p class="coordinates">05:47 AM <span>/</span> The Bajada <span>/</span> T−15:25</p>
+        <h2 id="desert-title">The desert keeps its own kind of time.</h2>
+        <p class="body-copy">A saguaro can spend two centuries on this slope—rooted wide, storing rain, waiting out the heat. Down in the valley, Tucson is waking. Today is Saturday.</p>
+        <p class="evidence">Sonoran Desert <span>/</span> First light <span>/</span> Game day</p>
+      </div>
+    </section>
 
-    // ---------------- The loop ----------------
-    let curT = 0;
-    function frameFor(t) { return clamp(Math.round(t * FPS), 0, FRAMES - 1); }
-    function relayout() {
-      const keepT = layoutValid ? timeAt(scrollY) : 0;   // if the old layout was degenerate, restart at 0
-      layout(); sizeCanvas(); scrollTo(0, yAt(keepT));
-    }
-    function tick() {
-      if (innerHeight > 0 && innerHeight !== VH) relayout();   // self-heal: backgrounded boot, pane resize
-      const y = scrollY;
-      const target = timeAt(y);
-      curT += (target - curT) * 0.28;                       // gentle temporal lerp — takes the top off scroll-wheel steps
-      if (Math.abs(target - curT) < 0.004) curT = target;
-      const f = frameFor(curT);
-      if (f !== painted) paint(f);
-      tendWindow(f);
-      updateCopy(curT, y);
-      requestAnimationFrame(tick);
-    }
+    <section class="story-panel interlude" data-panel="threshold-one" aria-label="From morning to monsoon">
+      <p><small>By afternoon</small>The heat builds.<br />So does the sky.</p>
+    </section>
 
-    // ---------------- Fly: piecewise clock in TRUE film time ----------------
-    const flyBtn = document.getElementById('fly'), flyLabel = document.getElementById('fly-label');
-    let flying = false, flyRaf = null;
-    const setFly = (st, tx) => { flyBtn.dataset.state = st; flyLabel.textContent = tx; };
-    function startFly() {
-      let t = timeAt(scrollY); if (t >= DUR - 0.15) t = 0;
-      const t0 = performance.now() - t * 1000;
-      flying = true; setFly('flying', 'Pause');
-      const step = ts => {
-        if (!flying) return;
-        const tt = clamp((ts - t0) / 1000, 0, DUR);
-        scrollTo(0, yAt(tt));
-        if (tt >= DUR) { stopFly('done', 'Replay'); return; }
-        flyRaf = requestAnimationFrame(step);
-      };
-      flyRaf = requestAnimationFrame(step);
-    }
-    function stopFly(st, tx) { flying = false; cancelAnimationFrame(flyRaf); setFly(st || 'idle', tx || 'Fly'); }
-    flyBtn.addEventListener('click', () => flying ? stopFly() : startFly());
-    ['wheel', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, () => { if (flying) stopFly(); }, { passive: true }));
+    <section class="story-panel chapter chapter-right chapter-monsoon" data-panel="monsoon" aria-labelledby="monsoon-title">
+      <img class="chapter-poster" src="assets/real/monsoon.webp" alt="A towering monsoon storm and lightning over the Sonoran Desert." />
+      <div class="copy-inner">
+        <p class="movement"><span>Movement 02</span><b>Weather</b></p>
+        <p class="coordinates">04:58 PM <span>/</span> The Monsoon <span>/</span> T−04:14</p>
+        <h2 id="monsoon-title">You can smell the rain before it lands.</h2>
+        <p class="body-copy">Creosote on wet stone. A wall of water on the Catalinas. Every wash running at once. Across the valley, porch by porch, we read the same sky.</p>
+        <p class="evidence">Creosote <span>/</span> Santa Catalinas <span>/</span> Running washes</p>
+      </div>
+    </section>
 
-    // ---------------- Fallback: no ImageBitmap -> single-master video scrub ----------------
-    const canCanvas = 'createImageBitmap' in window;
-    if (!canCanvas) {
-      canvas.remove();
-      const v = document.createElement('video');
-      v.muted = true; v.playsInline = true; v.preload = 'auto';
-      fetch('assets/vid/real/master-m.mp4').then(r => r.blob()).then(b => { v.src = URL.createObjectURL(b); });
-      v.addEventListener('loadeddata', () => poster.classList.add('hidden'));
-      stage.appendChild(v);
-      const vtick = () => { if (innerHeight > 0 && innerHeight !== VH) relayout(); const t = timeAt(scrollY); if (v.readyState >= 2 && Math.abs(v.currentTime - t) > 0.03 && !v.seeking) v.currentTime = t; updateCopy(t, scrollY); requestAnimationFrame(vtick); };
-      layout(); sizeCanvas(); requestAnimationFrame(vtick);
-    } else {
-      layout(); sizeCanvas();
-      decodeFrame(0).then(() => paint(0));
-      requestAnimationFrame(tick);
-    }
-    addEventListener('resize', relayout);
-  })();
-  </script>
+    <section class="story-panel interlude" data-panel="threshold-two" aria-label="From monsoon to night">
+      <p><small>After the rain</small>The streets shine.<br />The radios come on.</p>
+    </section>
+
+    <section class="story-panel chapter chapter-left chapter-kittpeak" data-panel="kittpeak" aria-labelledby="kittpeak-title">
+      <img class="chapter-poster" src="assets/real/kittpeak.webp" alt="Observatory domes beneath the Milky Way on I’oligam Du’ag." />
+      <div class="copy-inner">
+        <p class="movement"><span>Movement 03</span><b>Stillness</b></p>
+        <p class="coordinates">08:47 PM <span>/</span> I’oligam Du’ag <span>/</span> T−00:25</p>
+        <h2 id="kittpeak-title">Most nights, Tucson turns the lights down.</h2>
+        <p class="body-copy">And looks up.</p>
+        <p class="turn">Except on Saturdays.</p>
+        <p class="evidence">Kitt Peak <span>/</span> Tohono O’odham Nation <span>/</span> Dark sky</p>
+      </div>
+    </section>
+
+    <section class="story-panel interlude interlude-final" data-panel="threshold-three" aria-label="From the mountain to kickoff">
+      <p><small>Except on</small>Saturdays.</p>
+    </section>
+
+    <section class="story-panel chapter chapter-finale" data-panel="stadium" aria-labelledby="stadium-title">
+      <img class="chapter-poster" src="assets/real/stadium.webp" alt="A packed football stadium glowing against the Tucson night." />
+      <div class="copy-inner">
+        <p class="movement"><span>Movement 04</span><b>Together</b></p>
+        <p class="coordinates">09:12 PM <span>/</span> The Stadium <span>/</span> Kickoff</p>
+        <h2 id="stadium-title">On Saturdays, the desert gathers here.</h2>
+        <p class="body-copy">First light, rain on the streets, radios in the dark—the whole long day arrives with us. Then fifty thousand voices find the same note in one bowl of light. Bear Down.</p>
+        <div class="final-actions">
+          <a class="primary-action" href="https://arizonawildcats.com/sports/football/schedule">See the season</a>
+          <a class="secondary-action" href="#top" data-replay>Back to beginning</a>
+        </div>
+        <p class="legal">A personal fan project. Not affiliated with the University of Arizona.</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="about-dialog" aria-labelledby="about-title">
+    <button id="about-close" class="dialog-close" type="button" aria-label="Close field notes">Close</button>
+    <p class="dialog-kicker">Field notes / 01—04</p>
+    <h2 id="about-title">A cinematic composite of a Tucson game day.</h2>
+    <p>The Long Saturday is a personal, noncommercial fan project built from generative imagery. It is not documentary footage of one particular day, and it is not affiliated with the University of Arizona.</p>
+    <p>The third movement takes place on <a href="https://noirlab.edu/public/announcements/annee25018/">I’oligam Du’ag, in the Schuk Toak District of the Tohono O’odham Nation</a>. The final venue is currently named Casino Del Sol Stadium.</p>
+    <details class="sound-credits">
+      <summary>Authentic sound field notes</summary>
+      <p>Sound starts only when you press Play. Scrolling and chapter jumps seek silently. Every layer is a real field recording—no generated audio, broadcast rip, fight song, or stadium PA.</p>
+      <ul>
+        <li><a href="https://freesound.org/people/zidzid/sounds/395319/">Phoenix summer dawn</a> and <a href="https://freesound.org/people/zidzid/sounds/397785/">Phoenix monsoon</a> — zidzid, CC0</li>
+        <li><a href="https://freesound.org/people/felix.blume/sounds/135193/">Wind recorded on Kitt Peak</a> — Félix Blume, CC0</li>
+        <li><a href="https://freesound.org/people/stomachache/sounds/274516/">Stadium crowd</a> and <a href="https://freesound.org/people/timmyg62/sounds/328623/">college-football crowd</a> — stomachache and timmyg62, CC0</li>
+        <li><a href="https://www.nps.gov/media/video/view.htm?id=142AF441-6FAB-42B3-A1CE-30733A11DA7B">Rolling thunder</a> — National Park Service, public domain</li>
+        <li><a href="https://freesound.org/people/SamuelGremaud/sounds/435729/">Field-recorded firework</a> — SamuelGremaud, CC0</li>
+      </ul>
+      <p><a href="assets/audio/README.md">Read the full source and edit ledger.</a></p>
+    </details>
+    <dl>
+      <div><dt>Distance</dt><dd>One desert day</dd></div>
+      <div><dt>Flight time</dt><dd>00:52</dd></div>
+      <div><dt>Movements</dt><dd>Four</dd></div>
+      <div><dt>Controls</dt><dd>Scroll, play, or listen</dd></div>
+    </dl>
+  </dialog>
+
+  <footer class="source-notes">
+    <p class="dialog-kicker">Field notes</p>
+    <h2>About this story</h2>
+    <p>The Long Saturday is a personal, noncommercial fan project built from generative imagery. It is not documentary footage of one particular day and is not affiliated with the University of Arizona.</p>
+    <p>The third movement takes place on <a href="https://noirlab.edu/public/announcements/annee25018/">I’oligam Du’ag, in the Schuk Toak District of the Tohono O’odham Nation</a>. The final venue is currently named Casino Del Sol Stadium.</p>
+    <p>The Play soundtrack uses only credited real field recordings released under CC0 or into the U.S. public domain. Manual scrolling remains silent. <a href="assets/audio/README.md">Read the complete sound ledger.</a></p>
+  </footer>
 </body>
 </html>
