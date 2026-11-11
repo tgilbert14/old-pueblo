@@ -10,7 +10,23 @@
   if (!soundButton || !soundLabel || !soundStatus || !AudioContextClass || saveData || document.documentElement.classList.contains('static-story')) return;
 
   const STORY_DURATION = 52.367;
-  const SOUNDTRACK_URL = 'assets/audio/story-soundtrack.mp3';
+  // Review build: three candidate masters plus the v5.2 original. `?mix=b`
+  // picks one; `?review` shows a switcher so they can be compared mid-film.
+  const MIXES = {
+    a: { label: 'A', name: 'Storm spine', url: 'assets/audio/mixes/story-a.mp3' },
+    b: { label: 'B', name: 'Dawn chorus, seated', url: 'assets/audio/mixes/story-b.mp3' },
+    c: { label: 'C', name: 'Tone led', url: 'assets/audio/mixes/story-c.mp3' },
+    original: { label: 'v5.2', name: 'Original', url: 'assets/audio/story-soundtrack.mp3' },
+  };
+  const query = new URLSearchParams(location.search);
+  // `?music` adds the real-music mix once tools/sound/build.py has made it.
+  if (query.has('music')) {
+    MIXES.m1 = { label: 'Air', name: 'In the Air Tonight', url: 'assets/audio/mixes/story-m1.mp3' };
+    MIXES.m2 = { label: 'Sandman', name: 'Enter Sandman', url: 'assets/audio/mixes/story-m2.mp3' };
+    MIXES.m = { label: 'M', name: 'Other track', url: 'assets/audio/mixes/story-m.mp3' };
+  }
+  let mixKey = MIXES[query.get('mix')] ? query.get('mix') : 'a';
+  const buffers = new Map();
   const OUTPUT_LEVEL = .92;
 
   let desired = true;
@@ -142,7 +158,11 @@
   }
 
   function loadSoundtrack(generation) {
-    if (soundtrackBuffer) return Promise.resolve(soundtrackBuffer);
+    const key = mixKey;
+    if (buffers.has(key)) {
+      soundtrackBuffer = buffers.get(key);
+      return Promise.resolve(soundtrackBuffer);
+    }
     if (loadPromise) return loadPromise;
 
     const controller = new AbortController();
@@ -152,7 +172,7 @@
       controller.abort();
     }, 10000);
     loadController = controller;
-    const request = fetch(SOUNDTRACK_URL, { cache: 'force-cache', signal: controller.signal })
+    const request = fetch(MIXES[key].url, { cache: 'force-cache', signal: controller.signal })
       .then(response => {
         if (!response.ok) throw new Error('Could not load soundtrack');
         return response.arrayBuffer();
@@ -160,7 +180,8 @@
       .then(data => context.decodeAudioData(data))
       .then(buffer => {
         if (generation !== loadGeneration || controller.signal.aborted) throw new DOMException('Sound load cancelled', 'AbortError');
-        soundtrackBuffer = buffer;
+        buffers.set(key, buffer);
+        if (key === mixKey) soundtrackBuffer = buffer;
         return buffer;
       })
       .catch(error => {
@@ -257,7 +278,9 @@
     activeSource = source;
     fadeMaster(0, 0);
     source.start(0, offset);
-    fadeMaster(OUTPUT_LEVEL, .16);
+    // From the top the master carries its own opening; mid-film it needs a
+    // real fade so a resume never lands as a cut.
+    fadeMaster(OUTPUT_LEVEL, offset < .3 ? .16 : .6);
     setButtonState('on', 'Soundtrack playing.');
 
     source.onended = () => {
@@ -297,7 +320,7 @@
     }
 
     phase = 'idle';
-    fadeAndStop(.14, true);
+    fadeAndStop(.45, true);
     if (desired && !unavailable) setButtonState('ready');
   }
 
@@ -324,7 +347,7 @@
   function interruptPlayback() {
     if (phase === 'idle') return;
     phase = 'idle';
-    fadeAndStop(.1, true);
+    fadeAndStop(.4, true);
     if (desired && !unavailable && !loading) setButtonState('ready');
   }
 
@@ -359,6 +382,47 @@
     } else {
       setButtonState('ready', 'Sound on. Press Play to listen.');
     }
+  }
+
+  function chooseMix(key) {
+    if (!MIXES[key] || key === mixKey) return;
+    mixKey = key;
+    document.body.dataset.mix = key;
+    loadGeneration += 1;
+    loadController?.abort();
+    loadController = undefined;
+    loadPromise = undefined;
+    soundtrackBuffer = buffers.get(key);
+    if (phase !== 'playing' || !desired) return;
+    if (soundtrackBuffer && context?.state === 'running') {
+      fadeAndStop(.25, false);
+      setTimeout(() => { if (phase === 'playing' && mixKey === key) startSource(storyTime); }, 290);
+    } else {
+      fadeAndStop(.25, false);
+      setTimeout(() => { if (phase === 'playing' && mixKey === key) ensureReadyFromGesture(); }, 290);
+    }
+  }
+
+  document.body.dataset.mix = mixKey;
+  if (query.has('review')) {
+    const picker = document.createElement('div');
+    picker.className = 'mix-review';
+    picker.setAttribute('role', 'group');
+    picker.setAttribute('aria-label', 'Review: soundtrack mix');
+    for (const [key, mix] of Object.entries(MIXES)) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'transport-control';
+      button.textContent = mix.label;
+      button.title = mix.name;
+      button.setAttribute('aria-pressed', String(key === mixKey));
+      button.addEventListener('click', () => {
+        chooseMix(key);
+        picker.querySelectorAll('button').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      });
+      picker.append(button);
+    }
+    soundButton.before(picker);
   }
 
   soundButton.hidden = false;

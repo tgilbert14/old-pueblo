@@ -248,6 +248,8 @@
   let wantedFrame = 0;
   let queuedCenter = -999;
   let paintedFrame = -999;
+  let dissolvePasses = 0;
+  let bufferNoticeTimer = 0;
   let frameFailures = 0;
   let canvasWidth = 0;
   let canvasHeight = 0;
@@ -337,7 +339,6 @@
       for (const [index, controller] of activeFrames) {
         if (Math.abs(index - center) > FORWARD_WINDOW * 2) controller.abort();
       }
-      if (Math.abs(paintedFrame - center) > 4) canvas.classList.remove('is-ready');
     }
     queuedCenter = center;
 
@@ -378,11 +379,15 @@
   function paint(center) {
     if (!frameMode || framePipelineSuspended || playbackUsesVideo || navigating || !canvasWidth || !canvasHeight) return;
     const candidate = nearestBitmap(center);
-    if (!candidate) {
-      if (Math.abs(paintedFrame - center) > 3) canvas.classList.remove('is-ready');
-      return;
-    }
+    // No frame yet: keep whatever film frame is already on the canvas. Falling
+    // back to a chapter still here is what made jumps read as cuts.
+    if (!candidate) return;
     if (candidate.index === paintedFrame && canvas.classList.contains('is-ready')) return;
+
+    // A jump of more than a few frames dissolves in over about eight paints
+    // instead of popping: each pass lays the new frame over the old at 34%.
+    const held = canvas.classList.contains('is-ready') && paintedFrame >= 0;
+    if (held && dissolvePasses === 0 && Math.abs(candidate.index - paintedFrame) > 8) dissolvePasses = 8;
 
     const bitmap = candidate.bitmap;
     const ultrawide = stage.clientWidth / Math.max(1, stage.clientHeight) > 2;
@@ -391,11 +396,47 @@
       : Math.max(canvasWidth / bitmap.width, canvasHeight / bitmap.height);
     const width = bitmap.width * scale;
     const height = bitmap.height * scale;
+    if (dissolvePasses > 1) {
+      dissolvePasses -= 1;
+      context.globalAlpha = .34;
+      context.drawImage(bitmap, (canvasWidth - width) / 2, (canvasHeight - height) / 2, width, height);
+      context.globalAlpha = 1;
+      requestRender();
+      return;
+    }
+    dissolvePasses = 0;
     context.fillStyle = '#050606';
     context.fillRect(0, 0, canvasWidth, canvasHeight);
     context.drawImage(bitmap, (canvasWidth - width) / 2, (canvasHeight - height) / 2, width, height);
     paintedFrame = candidate.index;
     canvas.classList.add('is-ready');
+  }
+
+  /* Hand the exact frame the video is showing to the canvas, so leaving Play
+     never reveals an older frame or a chapter still underneath. */
+  function captureVideoFrame() {
+    if (!frameMode || !canvasWidth || !canvasHeight || !video.videoWidth) return;
+    const ultrawide = stage.clientWidth / Math.max(1, stage.clientHeight) > 2;
+    const scale = ultrawide
+      ? Math.min(canvasWidth / video.videoWidth, canvasHeight / video.videoHeight)
+      : Math.max(canvasWidth / video.videoWidth, canvasHeight / video.videoHeight);
+    const width = video.videoWidth * scale;
+    const height = video.videoHeight * scale;
+    try {
+      context.fillStyle = '#050606';
+      context.fillRect(0, 0, canvasWidth, canvasHeight);
+      context.drawImage(video, (canvasWidth - width) / 2, (canvasHeight - height) / 2, width, height);
+      paintedFrame = clamp(Math.round(video.currentTime * FPS), 0, FRAME_COUNT - 1);
+      dissolvePasses = 0;
+      canvas.classList.add('is-ready');
+    } catch { /* keep the previous frame */ }
+  }
+
+  function prefetchAround(center) {
+    if (!frameMode || framePipelineSuspended) return;
+    wantedFrame = center;
+    queuedCenter = center;
+    for (let distance = 0; distance <= 6; distance += 1) queueFrame(center + distance, distance);
   }
 
   function updateBufferStatus() {
@@ -415,6 +456,8 @@
     const total = end - start + 1;
     const percent = Math.round(available / total * 100);
     if (available && bitmaps.has(wantedFrame)) {
+      clearTimeout(bufferNoticeTimer);
+      bufferNoticeTimer = 0;
       bufferStatus.textContent = 'Film ready';
       bufferStatus.classList.add('is-quiet');
       if (!announcedReady) {
@@ -423,7 +466,12 @@
       }
     } else {
       bufferStatus.textContent = `Buffering nearby frames · ${percent}%`;
-      bufferStatus.classList.remove('is-quiet');
+      if (!bufferNoticeTimer && bufferStatus.classList.contains('is-quiet')) {
+        bufferNoticeTimer = setTimeout(() => {
+          bufferNoticeTimer = 0;
+          if (!bitmaps.has(wantedFrame) && frameMode && !playbackUsesVideo) bufferStatus.classList.remove('is-quiet');
+        }, 700);
+      }
     }
   }
 
@@ -444,8 +492,7 @@
     for (const controller of activeFrames.values()) controller.abort();
     for (const bitmap of bitmaps.values()) bitmap.close();
     bitmaps.clear();
-    paintedFrame = -999;
-    canvas.classList.remove('is-ready');
+    // The canvas keeps its pixels: it is the picture until the video covers it.
   }
 
   function resumeFramePipeline() {
@@ -488,6 +535,7 @@
   /* Play mode uses the baked master video only after an explicit click. */
   function setPlayState(state, remaining = DURATION) {
     const active = state === 'playing' || state === 'loading' || state === 'buffering';
+    document.body.dataset.play = active ? 'on' : 'off';
     const soundAvailable = Boolean(window.longSaturdaySoundscape);
     const startLabel = remaining < DURATION - .25 ? 'Resume' : soundAvailable ? 'Play with sound' : 'Play story';
     playButton.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -557,7 +605,6 @@
       playbackUsesVideo = true;
       videoBuffering = false;
       video.classList.add('is-playing');
-      canvas.classList.remove('is-ready');
       return true;
     } catch {
       clearTimeout(playTimer);
@@ -590,7 +637,6 @@
     } catch (error) {
       console.warn('The optional soundtrack could not prepare. Continuing silently.', error);
     }
-    if (frameMode) suspendFramePipeline();
     setPlayState('loading', DURATION - startTime);
 
     const videoReady = !motionPreference.matches && !saveData ? prepareVideo(startTime, attempt) : Promise.resolve(false);
@@ -598,7 +644,7 @@
     if (!playing || attempt !== playbackAttempt) return;
     const useVideo = preparedVideo && await startPreparedVideo(attempt);
     if (!playing || attempt !== playbackAttempt) return;
-    if (!useVideo && frameMode) resumeFramePipeline();
+    if (useVideo && frameMode) suspendFramePipeline();
     const playbackStart = useVideo ? video.currentTime : startTime;
     clockStartedAt = performance.now() - playbackStart * 1000;
     window.longSaturdaySoundscape?.beginPlayback(playbackStart);
@@ -632,6 +678,7 @@
     clearTimeout(videoRecoveryTimer);
     cancelAnimationFrame(playbackFrame);
     video.pause();
+    if (playbackUsesVideo) captureVideoFrame();
     video.classList.remove('is-playing');
     playbackUsesVideo = false;
     if (wasPlaying) window.longSaturdaySoundscape?.endPlayback({ natural: state === 'done', time: state === 'done' ? DURATION : stoppedAt });
@@ -669,6 +716,7 @@
     playbackUsesVideo = false;
     videoBuffering = false;
     video.pause();
+    captureVideoFrame();
     video.classList.remove('is-playing');
     if (resetVideo) {
       video.removeAttribute('src');
@@ -727,6 +775,7 @@
       const chapter = CHAPTERS.find(item => item.id === button.dataset.target);
       if (!chapter) return;
       beginNavigation();
+      prefetchAround(clamp(Math.round(NAV_TIMES[chapter.id] * FPS), 0, FRAME_COUNT - 1));
       scrollTo({ top: yAt(NAV_TIMES[chapter.id]), behavior: motionPreference.matches ? 'auto' : 'smooth' });
     });
   });
@@ -737,6 +786,7 @@
       stopPlayback();
       document.dispatchEvent(new CustomEvent('longsaturday:reset'));
       beginNavigation();
+      prefetchAround(0);
       scrollTo({ top: 0, behavior: motionPreference.matches ? 'auto' : 'smooth' });
     });
   });
@@ -747,7 +797,6 @@
     clearTimeout(navigationTimer);
     pendingFrames.clear();
     for (const controller of activeFrames.values()) controller.abort();
-    canvas.classList.remove('is-ready');
     navigationTimer = setTimeout(finishNavigation, motionPreference.matches ? 50 : 900);
   }
 
@@ -769,6 +818,26 @@
   });
   aboutClose.addEventListener('click', () => aboutDialog.close());
   aboutDialog.addEventListener('click', event => { if (event.target === aboutDialog) aboutDialog.close(); });
+
+  // The 90-second film lives on YouTube. Nothing is requested from YouTube until the visitor asks for it.
+  const filmDialog = document.querySelector('#film-dialog');
+  const filmFrame = document.querySelector('#film-frame');
+  if (filmDialog && filmFrame && filmDialog.showModal) {
+    document.querySelectorAll('[data-film]').forEach(link => link.addEventListener('click', event => {
+      event.preventDefault();
+      stopPlayback();
+      const frame = document.createElement('iframe');
+      frame.src = 'https://www.youtube-nocookie.com/embed/EynTqI4kibo?autoplay=1&rel=0&playsinline=1';
+      frame.title = 'The Long Saturday, the 90-second film';
+      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      frame.allowFullscreen = true;
+      filmFrame.replaceChildren(frame);
+      filmDialog.showModal();
+    }));
+    filmDialog.addEventListener('close', () => filmFrame.replaceChildren());      // removing the player stops the sound
+    document.querySelector('#film-close').addEventListener('click', () => filmDialog.close());
+    filmDialog.addEventListener('click', event => { if (event.target === filmDialog) filmDialog.close(); });
+  }
 
   motionPreference.addEventListener?.('change', () => location.reload());
 

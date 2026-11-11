@@ -112,11 +112,16 @@ a { color: inherit; }
 
 #film-video {
   z-index: 3;
-  display: none;
-  background: #050606;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms ease, visibility 0s linear 240ms;
 }
 
-#film-video.is-playing { display: block; }
+#film-video.is-playing {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms ease;
+}
 
 .stage-wash {
   z-index: 4;
@@ -249,6 +254,26 @@ body[data-scene="stadium"] .stage-wash {
 }
 
 .sound-control[hidden] { display: none; }
+
+/* The synthesized-tone disclosure shows only for the mixes that carry it. */
+.mix-note-tone { display: none; }
+body[data-mix="b"] .mix-note-tone,
+body[data-mix="c"] .mix-note-tone { display: block; }
+
+/* Review-only mix switcher (?review). Not part of the shipped chrome. */
+.mix-review { display: flex; gap: 2px; }
+.mix-review button {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(241, 231, 211, .22);
+  background: rgba(5, 6, 6, .5);
+  color: rgba(241, 231, 211, .7);
+  font: 600 .6rem/1 var(--mono);
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+.mix-review button[aria-pressed="true"] { border-color: var(--accent); color: var(--paper-soft); }
 
 .text-control {
   padding: 0 16px;
@@ -697,6 +722,7 @@ body[data-scene="stadium"] .stage-wash {
 
 .final-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -722,6 +748,23 @@ body[data-scene="stadium"] .stage-wash {
   font: 500 .55rem/1.45 var(--mono);
   letter-spacing: .04em;
 }
+
+/* The 90-second film, played from YouTube on request */
+#film-dialog {
+  width: min(94vw, 1100px);
+  padding: clamp(18px, 3vw, 34px);
+  border: 1px solid rgba(241, 231, 211, .35);
+  border-radius: 0;
+  color: var(--paper);
+  background: #0b0d0d;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .7);
+}
+#film-dialog::backdrop { background: rgba(2, 3, 3, .88); backdrop-filter: blur(8px); }
+#film-dialog h2 { margin: 0 64px 14px 0; }
+.film-frame { aspect-ratio: 16 / 9; width: 100%; background: #000; }
+.film-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.film-note { margin: 14px 0 0; color: var(--paper-soft); font-size: .86rem; line-height: 1.55; }
+.film-note a { color: var(--paper); text-decoration-color: var(--clay); text-underline-offset: 4px; }
 
 /* Field notes */
 #about-dialog {
@@ -1039,6 +1082,83 @@ body[data-scene="stadium"] .stage-wash {
   .movement { margin-bottom: 10px; }
   .copy-inner { max-height: calc(100svh - 108px); }
   .chapter-finale .copy-inner { max-height: calc(100svh - 112px); overflow: auto; }
+}
+
+/* Film captions (v5.3). On the full-bleed film the words sit as a lower-third
+   caption so the picture stays the subject. Phones keep the copy field below the
+   film window, and the still and no-JS editions keep the full editorial layout. */
+@media (min-width: 1025px), (min-width: 761px) and (hover: hover) {
+  html.js:not(.static-story) .chapter:not(.chapter-finale)::before,
+  html.js:not(.static-story) .prologue::before {
+    position: absolute;
+    inset: 58% 0 0;
+    background: linear-gradient(0deg, rgba(5, 6, 6, .74), rgba(5, 6, 6, .34) 48%, transparent);
+    content: "";
+  }
+
+  html.js:not(.static-story) .chapter:not(.chapter-finale) .copy-inner,
+  html.js:not(.static-story) .prologue .copy-inner {
+    top: auto;
+    right: auto;
+    bottom: clamp(38px, 7vh, 72px);
+    left: clamp(26px, 4vw, 64px);
+    width: min(48vw, 540px);
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    translate: none;
+    background: none;
+  }
+
+  html.js:not(.static-story) .chapter .movement,
+  html.js:not(.static-story) .chapter .evidence { display: none; }
+
+  html.js:not(.static-story) .coordinates { margin-bottom: 9px; font-size: .58rem; }
+
+  html.js:not(.static-story) .chapter h2 {
+    font-size: clamp(1.7rem, 2.5vw, 2.6rem);
+    line-height: .96;
+    letter-spacing: -.02em;
+  }
+
+  html.js:not(.static-story) .body-copy {
+    max-width: 46ch;
+    margin-top: 10px;
+    color: var(--paper-soft);
+    font-size: clamp(.88rem, 1vw, .98rem);
+    line-height: 1.45;
+  }
+
+  /* While the film plays itself there is no time to read a paragraph. */
+  html.js:not(.static-story) body[data-play="on"] .chapter:not(.chapter-finale) .body-copy { display: none; }
+
+  html.js:not(.static-story) .turn { margin-top: 10px; font-size: clamp(1.5rem, 2.2vw, 2.3rem); }
+
+  html.js:not(.static-story) .prologue h1 {
+    max-width: 14ch;
+    font-size: clamp(2.3rem, 4.2vw, 4.4rem);
+    line-height: .88;
+    letter-spacing: -.03em;
+  }
+  html.js:not(.static-story) .kicker { margin-bottom: 12px; }
+  html.js:not(.static-story) .dek { max-width: 40ch; margin-top: 14px; font-size: clamp(.95rem, 1.1vw, 1.08rem); }
+  html.js:not(.static-story) .scroll-cue { margin-top: 20px; }
+
+  html.js:not(.static-story) .interlude { place-items: end center; padding-bottom: clamp(48px, 9vh, 96px); }
+  html.js:not(.static-story) .interlude::before {
+    inset: 62% 0 0;
+    background: linear-gradient(0deg, rgba(5, 6, 6, .6), transparent);
+  }
+  html.js:not(.static-story) .interlude p { max-width: 34ch; font-size: clamp(1.25rem, 1.9vw, 1.9rem); line-height: 1.12; }
+  html.js:not(.static-story) .interlude small { margin-bottom: 10px; }
+  html.js:not(.static-story) .interlude-final p { font-size: clamp(1.9rem, 3.2vw, 3.3rem); }
+
+  html.js:not(.static-story) .chapter-finale { padding-bottom: clamp(26px, 4vh, 44px); }
+  html.js:not(.static-story) .chapter-finale::before { inset: 64% 0 0; }
+  html.js:not(.static-story) .chapter-finale h2 { max-width: 30ch; font-size: clamp(1.9rem, 3vw, 3.1rem); }
+  html.js:not(.static-story) .chapter-finale .final-actions { margin-top: 16px; }
+  html.js:not(.static-story) .chapter-finale .legal { margin-top: 12px; }
+  html.js:not(.static-story) .chapter-finale .body-copy { max-width: 52ch; color: var(--paper); }
 }
 
 @media (prefers-reduced-motion: reduce) {
