@@ -704,6 +704,7 @@ body[data-mix="c"] .mix-note-tone { display: block; }
 .chapter-finale .body-copy { max-width: 47ch; margin-inline: auto; }
 
 .chapter-finale .movement,
+.chapter-finale .coordinates,
 .chapter-finale h2 {
   opacity: var(--final-headline, 0);
   transform: translateY(calc((1 - var(--final-headline, 0)) * 14px));

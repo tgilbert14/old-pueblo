@@ -4,8 +4,9 @@
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
   const FPS = 30;
-  const FRAME_COUNT = 1571;
-  const DURATION = 52.367;
+  const FRAME_COUNT = 2701;
+  const DURATION = 90.033;
+  const MEDIA_VERSION = 'v6';                 // bump when the film files change: same paths, new picture
   const MOBILE_QUERY = '(max-width: 760px), (hover: none) and (max-width: 1024px)';
 
   const SEGMENTS = [
@@ -14,12 +15,12 @@
     { id: 'monsoon', t0: 14.333, t1: 23.9, weight: 1.85, accent: '#a8bac6', poster: 'monsoon' },
     { id: 'conn2', t0: 23.9, t1: 28.467, weight: 0.66, from: 'monsoon', to: 'kittpeak' },
     { id: 'kittpeak', t0: 28.467, t1: 38.033, weight: 2.05, accent: '#8293c6', poster: 'kittpeak' },
-    { id: 'conn3', t0: 38.033, t1: 42.6, weight: 0.72, from: 'kittpeak', to: 'stadium' },
-    { id: 'stadium', t0: 42.6, t1: 52.367, weight: 2.85, accent: '#e0445d', poster: 'stadium' },
+    { id: 'conn3', t0: 38.033, t1: 55.6, weight: 1.9, from: 'kittpeak', to: 'stadium' },    // sky roll, the valley, the red pillar
+    { id: 'stadium', t0: 55.6, t1: 90.033, weight: 4.6, accent: '#e0445d', poster: 'stadium' },   // lights at 58.8, lift-off 70.5, clouds to the end
   ];
 
   const CHAPTERS = SEGMENTS.filter(segment => segment.poster);
-  const NAV_TIMES = { desert: 5.5, monsoon: 18, kittpeak: 32.5, stadium: 51.25 };
+  const NAV_TIMES = { desert: 5.5, monsoon: 18, kittpeak: 32.5, stadium: 66 };
   const PANELS = [
     { id: 'prologue', start: 0, end: 4.35, fadeIn: 0, fadeOut: 1.5 },
     { id: 'desert', start: 2.55, end: 9.55, fadeIn: 1.25, fadeOut: 1.1 },
@@ -27,8 +28,8 @@
     { id: 'monsoon', start: 14.45, end: 23.55, fadeIn: 1.25, fadeOut: 1.15 },
     { id: 'threshold-two', start: 24.05, end: 28.25, fadeIn: .9, fadeOut: .8 },
     { id: 'kittpeak', start: 28.7, end: 38.15, fadeIn: 1.25, fadeOut: 1.2 },
-    { id: 'threshold-three', start: 37.45, end: 44.55, fadeIn: 1, fadeOut: 1.05 },
-    { id: 'stadium', start: 43.05, end: DURATION, fadeIn: 1.05, fadeOut: 0 },
+    { id: 'threshold-three', start: 44.6, end: 55.4, fadeIn: 1, fadeOut: 1.05 },
+    { id: 'stadium', start: 58.9, end: DURATION, fadeIn: 1.05, fadeOut: 0 },
   ].map(config => ({ ...config, element: document.querySelector(`[data-panel="${config.id}"]`) }));
 
   const root = document.documentElement;
@@ -61,7 +62,7 @@
     const x = clamp(value, 0, 1);
     return x * x * (3 - 2 * x);
   };
-  const frameSource = index => `assets/film/f${String(index + 1).padStart(4, '0')}.webp`;
+  const frameSource = index => `assets/film/f${String(index + 1).padStart(4, '0')}.webp?${MEDIA_VERSION}`;
   const formatTime = seconds => {
     const value = Math.max(0, Math.round(seconds));
     return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
@@ -178,10 +179,13 @@
     document.querySelector('[data-panel="kittpeak"]')?.style.setProperty('--turn-opacity', kittPeakTurn.toFixed(3));
 
     const finalePanel = document.querySelector('[data-panel="stadium"]');
-    const finaleHeadline = smooth((time - 48.35) / .95);
-    const finaleBody = smooth((time - 49.05) / .85);
-    const finaleActionReveal = smooth((time - 50.4) / .9);
-    const finaleGradient = smooth((time - 48) / 1.2);
+    // the headline and body play over the lit stadium, then clear as the camera lifts into the cloud; the actions return over the last image
+    const finaleClear = 1 - smooth((time - 69.6) / 1.8);
+    const finaleReturn = smooth((time - 86.4) / 1.4);          // the end card: headline, body and actions come back as the last image fades
+    const finaleHeadline = Math.max(smooth((time - 60.2) / .95) * finaleClear, finaleReturn);
+    const finaleBody = Math.max(smooth((time - 61.0) / .85) * finaleClear, smooth((time - 86.9) / 1.3));
+    const finaleActionReveal = smooth((time - 87.4) / 1.2);
+    const finaleGradient = Math.max(smooth((time - 59.8) / 1.2) * finaleClear, finaleReturn);
     finalePanel?.style.setProperty('--final-headline', finaleHeadline.toFixed(3));
     finalePanel?.style.setProperty('--final-body', finaleBody.toFixed(3));
     finalePanel?.style.setProperty('--final-actions', finaleActionReveal.toFixed(3));
@@ -563,7 +567,7 @@
   async function prepareVideo(startTime, attempt) {
     try {
       if (!videoWasPrepared) {
-        video.src = 'assets/vid/real/master-web.mp4';
+        video.src = `assets/vid/real/master-web.mp4?${MEDIA_VERSION}`;
         video.load();
         videoWasPrepared = true;
       }

@@ -9,22 +9,12 @@
 
   if (!soundButton || !soundLabel || !soundStatus || !AudioContextClass || saveData || document.documentElement.classList.contains('static-story')) return;
 
-  const STORY_DURATION = 52.367;
-  // Review build: three candidate masters plus the v5.2 original. `?mix=b`
-  // picks one; `?review` shows a switcher so they can be compared mid-film.
+  const STORY_DURATION = 90.033;
+  // One master: the field-recording mix cut to the 90-second picture (tools/sound/build_long.py --no-song).
   const MIXES = {
-    a: { label: 'A', name: 'Storm spine', url: 'assets/audio/mixes/story-a.mp3' },
-    b: { label: 'B', name: 'Dawn chorus, seated', url: 'assets/audio/mixes/story-b.mp3' },
-    c: { label: 'C', name: 'Tone led', url: 'assets/audio/mixes/story-c.mp3' },
-    original: { label: 'v5.2', name: 'Original', url: 'assets/audio/story-soundtrack.mp3' },
+    a: { label: 'A', name: 'Field recordings', url: 'assets/audio/mixes/story-long.mp3' },
   };
   const query = new URLSearchParams(location.search);
-  // `?music` adds the real-music mix once tools/sound/build.py has made it.
-  if (query.has('music')) {
-    MIXES.m1 = { label: 'Air', name: 'In the Air Tonight', url: 'assets/audio/mixes/story-m1.mp3' };
-    MIXES.m2 = { label: 'Sandman', name: 'Enter Sandman', url: 'assets/audio/mixes/story-m2.mp3' };
-    MIXES.m = { label: 'M', name: 'Other track', url: 'assets/audio/mixes/story-m.mp3' };
-  }
   let mixKey = MIXES[query.get('mix')] ? query.get('mix') : 'a';
   const buffers = new Map();
   const OUTPUT_LEVEL = .92;

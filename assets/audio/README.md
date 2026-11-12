@@ -31,6 +31,8 @@ integrated with a −2.9 dBTP true peak.
 
 ## Review mixes (branch `sound-flow-revamp`, 2026-11-09)
 
+**The page's Play master is now `mixes/story-long.mp3`**: the no-song long-cut mix (`story-nsv6.mp3`) raised 4 dB through a limiter, cut to the 90-second picture. Nobody has listened to it yet. The three 52-second candidates below are kept but no longer played by the page.
+
 Three candidate Play masters live in `mixes/`, built by `tools/sound/build.py`
 from the stems above. Each has a measurement receipt beside it (`story-*.json`).
 **Nobody has listened to these yet.** The receipts only show loudness, peak and
