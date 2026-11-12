@@ -749,6 +749,67 @@ body[data-mix="c"] .mix-note-tone { display: block; }
   letter-spacing: .04em;
 }
 
+/* The films, billed on the opening screen */
+a.text-control { display: inline-flex; align-items: center; text-decoration: none; }
+.films-control { border-color: var(--paper); background: var(--paper); color: var(--basalt); }
+.films-control:hover { background: #fff; }
+.film-bill { margin: 26px 0 0; }
+.film-bill-label {
+  margin: 0 0 10px;
+  color: var(--paper-soft);
+  font: 700 .58rem/1.3 var(--mono);
+  text-transform: uppercase;
+  letter-spacing: .11em;
+}
+.film-bill-label span { padding: 0 .5em; color: var(--accent); }
+.film-bill-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: 560px; }
+.film-card {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(241, 231, 211, .5);
+  color: var(--paper);
+  background: #000;
+  text-decoration: none;
+}
+.film-card img { display: block; width: 100%; height: 100%; object-fit: cover; transition: scale .5s ease; }
+.film-card::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(5, 6, 6, .88), rgba(5, 6, 6, .1) 62%);
+  content: "";
+}
+.film-card-play {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--paper);
+  border-radius: 50%;
+  background: rgba(5, 6, 6, .5);
+}
+.film-card-play::after {
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  border: 6px solid transparent;
+  border-left: 10px solid var(--paper);
+  border-right: 0;
+  translate: -50% -50%;
+  content: "";
+}
+.film-card-text { position: absolute; z-index: 1; right: 12px; bottom: 10px; left: 12px; display: grid; gap: 5px; }
+.film-card-text small { color: var(--paper-soft); font: 700 .54rem/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+.film-card-text b { font: 800 clamp(1rem, 1.5vw, 1.35rem)/1 var(--display); text-transform: uppercase; letter-spacing: -.005em; }
+.film-card:hover img, .film-card:focus-visible img { scale: 1.05; }
+.film-card:hover { border-color: var(--paper); }
+.film-card:hover .film-card-play { background: var(--paper); }
+.film-card:hover .film-card-play::after { border-left-color: var(--basalt); }
+@media (prefers-reduced-motion: reduce) { .film-card img { transition: none; } }
+
 /* The 90-second film, played from YouTube on request */
 #film-dialog {
   width: min(94vw, 1100px);
@@ -761,6 +822,20 @@ body[data-mix="c"] .mix-note-tone { display: block; }
 }
 #film-dialog::backdrop { background: rgba(2, 3, 3, .88); backdrop-filter: blur(8px); }
 #film-dialog h2 { margin: 0 64px 14px 0; }
+.film-cuts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.film-cuts button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(241, 231, 211, .44);
+  border-radius: 0;
+  color: var(--paper);
+  background: transparent;
+  font: 700 .62rem/1 var(--mono);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+.film-cuts button[aria-pressed="true"] { border-color: var(--paper); background: var(--paper); color: var(--basalt); }
 .film-frame { aspect-ratio: 16 / 9; width: 100%; background: #000; }
 .film-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
 .film-note { margin: 14px 0 0; color: var(--paper-soft); font-size: .86rem; line-height: 1.55; }
@@ -960,10 +1035,22 @@ body[data-mix="c"] .mix-note-tone { display: block; }
   }
 
   .prologue .copy-inner { top: auto; }
-  .prologue h1 { max-width: 9ch; font-size: clamp(3.1rem, 14vw, 5.4rem); line-height: .86; }
+  .prologue h1 { max-width: 13ch; font-size: clamp(2.2rem, 10vw, 3.8rem); line-height: .88; }
   .kicker { margin-bottom: 13px; font-size: .54rem; }
   .dek { margin-top: 16px; font-size: clamp(.95rem, 4.1vw, 1.08rem); line-height: 1.42; }
   .scroll-cue { display: none; }
+  .film-bill { margin-top: 16px; }
+  .film-bill-label { margin-bottom: 8px; font-size: .5rem; }
+  .film-bill-cards { gap: 8px; max-width: none; }
+  .film-card { aspect-ratio: 2 / 1; }
+  .film-card-play { top: 7px; right: 7px; width: 28px; height: 28px; }
+  .film-card-text { right: 9px; bottom: 8px; left: 9px; gap: 4px; }
+  .film-card-text small { font-size: .46rem; }
+  .film-card-text b { font-size: clamp(.86rem, 4.1vw, 1.1rem); }
+  @media (max-height: 720px) {
+    .prologue .dek, .film-bill-label { display: none; }
+    .film-bill { margin-top: 8px; }
+  }
 
   .movement { margin-bottom: 10px; font-size: .51rem; }
   .movement b { font-size: .54rem; }

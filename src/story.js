@@ -823,17 +823,28 @@
   const filmDialog = document.querySelector('#film-dialog');
   const filmFrame = document.querySelector('#film-frame');
   if (filmDialog && filmFrame && filmDialog.showModal) {
+    const cuts = {
+      sandman: { id: 'EynTqI4kibo', song: 'Enter Sandman' },
+      air: { id: 'Djk6HiQ--dg', song: 'In the Air Tonight' }
+    };
+    const cutButtons = [...filmDialog.querySelectorAll('[data-cut]')];
+    const showCut = key => {
+      const cut = cuts[key] || cuts.sandman;
+      const frame = document.createElement('iframe');
+      frame.src = `https://www.youtube-nocookie.com/embed/${cut.id}?autoplay=1&rel=0&playsinline=1`;
+      frame.title = `The Long Saturday, the 90-second film, set to ${cut.song}`;
+      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      frame.allowFullscreen = true;
+      filmFrame.replaceChildren(frame);                                            // swapping the player stops the other cut
+      cutButtons.forEach(button => button.setAttribute('aria-pressed', String(cuts[button.dataset.cut] === cut)));
+    };
     document.querySelectorAll('[data-film]').forEach(link => link.addEventListener('click', event => {
       event.preventDefault();
       stopPlayback();
-      const frame = document.createElement('iframe');
-      frame.src = 'https://www.youtube-nocookie.com/embed/EynTqI4kibo?autoplay=1&rel=0&playsinline=1';
-      frame.title = 'The Long Saturday, the 90-second film';
-      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-      frame.allowFullscreen = true;
-      filmFrame.replaceChildren(frame);
-      filmDialog.showModal();
+      showCut(link.dataset.film);
+      if (!filmDialog.open) filmDialog.showModal();
     }));
+    cutButtons.forEach(button => button.addEventListener('click', () => showCut(button.dataset.cut)));
     filmDialog.addEventListener('close', () => filmFrame.replaceChildren());      // removing the player stops the sound
     document.querySelector('#film-close').addEventListener('click', () => filmDialog.close());
     filmDialog.addEventListener('click', event => { if (event.target === filmDialog) filmDialog.close(); });

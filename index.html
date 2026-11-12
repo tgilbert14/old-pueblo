@@ -43,6 +43,7 @@
       <span><strong>The Long Saturday</strong><small>A game-day almanac</small></span>
     </a>
     <div class="chrome-actions">
+      <a class="text-control films-control" href="https://youtu.be/EynTqI4kibo" data-film="sandman">Films</a>
       <button id="about-open" class="text-control" type="button">Field notes</button>
       <button id="sound" class="sound-control transport-control" type="button" aria-pressed="true" aria-label="Turn soundtrack off" hidden>
         <span class="sound-icon" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -83,7 +84,22 @@
         <p class="kicker">The Old Pueblo <span>/</span> One Saturday</p>
         <h1 id="prologue-title">It starts long before kickoff.</h1>
         <p class="dek">One desert day—from first light on the bajada to kickoff under the lights.</p>
-        <p class="scroll-cue"><span aria-hidden="true"></span> Scroll to travel</p>
+        <div class="film-bill">
+          <p class="film-bill-label">Now showing <span>/</span> The 90-second film <span>/</span> Two cuts</p>
+          <div class="film-bill-cards">
+            <a class="film-card" href="https://youtu.be/EynTqI4kibo" data-film="sandman" aria-label="Watch the film set to Enter Sandman, 1 minute 30">
+              <img src="assets/real/stadium.webp" alt="" loading="lazy" />
+              <i class="film-card-play" aria-hidden="true"></i>
+              <span class="film-card-text"><small>Cut 01 / 1:30</small><b>Enter Sandman</b></span>
+            </a>
+            <a class="film-card" href="https://youtu.be/Djk6HiQ--dg" data-film="air" aria-label="Watch the film set to In the Air Tonight, 1 minute 30">
+              <img src="assets/real/kittpeak.webp" alt="" loading="lazy" />
+              <i class="film-card-play" aria-hidden="true"></i>
+              <span class="film-card-text"><small>Cut 02 / 1:30</small><b>In the Air Tonight</b></span>
+            </a>
+          </div>
+        </div>
+        <p class="scroll-cue"><span aria-hidden="true"></span> Or scroll the story</p>
       </div>
     </section>
 
@@ -141,7 +157,7 @@
         <h2 id="stadium-title">On Saturdays, the desert gathers here.</h2>
         <p class="body-copy">First light, rain on the streets, radios in the dark—the whole long day arrives with us. Then fifty thousand voices find the same note in one bowl of light. Bear Down.</p>
         <div class="final-actions">
-          <a class="primary-action" href="https://youtu.be/EynTqI4kibo" data-film>Watch the film <span aria-hidden="true">/ 1:30</span></a>
+          <a class="primary-action" href="https://youtu.be/EynTqI4kibo" data-film="sandman">Watch the film <span aria-hidden="true">/ 2 cuts</span></a>
           <a class="secondary-action" href="https://arizonawildcats.com/sports/football/schedule">See the season</a>
           <a class="secondary-action" href="#top" data-replay>Back to beginning</a>
         </div>
@@ -156,7 +172,7 @@
     <h2 id="about-title">A cinematic composite of a Tucson game day.</h2>
     <p>The Long Saturday is a personal, noncommercial fan project built from generative imagery. It is not documentary footage of one particular day, and it is not affiliated with the University of Arizona.</p>
     <p>The third movement takes place on <a href="https://noirlab.edu/public/announcements/annee25018/">I’oligam Du’ag, in the Schuk Toak District of the Tohono O’odham Nation</a>. The final venue is currently named Casino Del Sol Stadium.</p>
-    <p>The full 90-second film, with music, plays from YouTube: <a href="https://youtu.be/EynTqI4kibo" data-film>watch the film</a>. It is an unofficial fan tribute; the song belongs to its rights holders.</p>
+    <p>The full 90-second film plays from YouTube in two cuts, the same picture under two songs: <a href="https://youtu.be/EynTqI4kibo" data-film="sandman">"Enter Sandman"</a> and <a href="https://youtu.be/Djk6HiQ--dg" data-film="air">"In the Air Tonight"</a>. It is an unofficial fan tribute; the songs belong to their rights holders.</p>
     <details class="sound-credits">
       <summary>Sound field notes</summary>
       <p>Sound starts only when you press Play. Scrolling and chapter jumps seek silently. The wind, storm, thunder, crowd and fireworks are real field recordings. There is no broadcast rip, fight song, or stadium PA.</p>
@@ -181,8 +197,12 @@
   <dialog id="film-dialog" aria-labelledby="film-title">
     <button id="film-close" class="dialog-close" type="button" aria-label="Close the film">Close</button>
     <h2 id="film-title" class="dialog-kicker">The Long Saturday / the 90-second film</h2>
+    <div class="film-cuts" role="group" aria-label="Choose a cut">
+      <button type="button" data-cut="sandman" aria-pressed="true">Enter Sandman</button>
+      <button type="button" data-cut="air" aria-pressed="false">In the Air Tonight</button>
+    </div>
     <div id="film-frame" class="film-frame"></div>
-    <p class="film-note">An unofficial fan tribute made with generative imagery, set to "Enter Sandman" by Metallica. The video plays from YouTube, which loads only when you open this. <a href="https://youtu.be/EynTqI4kibo">Watch on YouTube</a>.</p>
+    <p class="film-note">An unofficial fan tribute made with generative imagery. Two cuts of the same 90 seconds: <a href="https://youtu.be/EynTqI4kibo">"Enter Sandman" by Metallica</a> and <a href="https://youtu.be/Djk6HiQ--dg">"In the Air Tonight" by Phil Collins</a>. The video plays from YouTube, which loads only when you open this.</p>
   </dialog>
 
   <footer class="source-notes">
@@ -190,7 +210,7 @@
     <h2>About this story</h2>
     <p>The Long Saturday is a personal, noncommercial fan project built from generative imagery. It is not documentary footage of one particular day and is not affiliated with the University of Arizona.</p>
     <p>The third movement takes place on <a href="https://noirlab.edu/public/announcements/annee25018/">I’oligam Du’ag, in the Schuk Toak District of the Tohono O’odham Nation</a>. The final venue is currently named Casino Del Sol Stadium.</p>
-    <p>A longer 90-second cut with music is on YouTube: <a href="https://youtu.be/EynTqI4kibo" data-film>watch the film</a>. It is an unofficial fan tribute; the song belongs to its rights holders.</p>
+    <p>A longer 90-second film is on YouTube in two cuts, the same picture under two songs: <a href="https://youtu.be/EynTqI4kibo" data-film="sandman">"Enter Sandman"</a> and <a href="https://youtu.be/Djk6HiQ--dg" data-film="air">"In the Air Tonight"</a>. It is an unofficial fan tribute; the songs belong to their rights holders.</p>
     <p>The Play soundtrack is built from credited real field recordings released under CC0 or into the U.S. public domain. Manual scrolling remains silent. <a href="assets/audio/README.md">Read the complete sound ledger.</a></p>
     <p class="mix-note mix-note-tone">This mix also carries a quiet tone bed that was synthesized in code for this piece. It is not a recording.</p>
   </footer>
